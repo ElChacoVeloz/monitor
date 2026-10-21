@@ -245,3 +245,7 @@ GNOME y el diálogo se planta encima del tablero al arrancar.
   `night`; con el anochecer en el futuro, `day` (sin usar `?theme=`).
 - Lista con 22 items (`test_data.py bigshop`): se muestran los que caben y el
   encabezado dice cuántos van, sin recortar en silencio.
+
+## Licencia
+
+MIT (ver `LICENSE`).
