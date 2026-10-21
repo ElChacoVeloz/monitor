@@ -1,0 +1,19 @@
+[Unit]
+Description=Monitor (tablero de pared)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=iserrano
+WorkingDirectory=/home/iserrano/monitor
+ExecStart=/usr/bin/python3 /home/iserrano/monitor/server.py --port 8770
+Restart=always
+RestartSec=5
+# sin secretos en los logs
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

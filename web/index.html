@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" class="day booting">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>Monitor</title>
+<script>
+/* paleta antes del primer pintado: sin destello blanco a media noche */
+(function () {
+  var q = new URLSearchParams(location.search).get("theme");
+  var t = (q === "day" || q === "night") ? q : null;
+  if (!t) { try { t = localStorage.getItem("monitor.theme"); } catch (e) {} }
+  if (t !== "night") t = "day";
+  document.documentElement.className = t + " booting";
+})();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="stage"><div class="screen" id="screen">
+
+  <header class="top">
+    <section class="card clockcard">
+      <div class="clock"><span id="clockTime">--:--</span><span id="clockAmPm" class="ampm"></span></div>
+      <div class="dateline" id="dateLong">&nbsp;</div>
+      <div class="placeline"><span class="dot"></span><span id="place"></span></div>
+    </section>
+
+    <section class="card nowcard" id="nowCard">
+      <div class="nowicon" id="nowIcon"></div>
+      <div class="nowtext">
+        <div class="nowtemp"><span id="nowTemp">--</span><span class="deg">°C</span></div>
+        <div class="nowdesc" id="nowDesc">Loading…</div>
+        <div class="nowfeels" id="nowFeels"></div>
+      </div>
+    </section>
+
+    <section class="card forecastcard">
+      <div class="blocktitle">5-Day Forecast <span class="unit">°C</span></div>
+      <div class="forecast" id="forecast"></div>
+    </section>
+  </header>
+
+  <main class="card weekcard">
+    <div class="blocktitle weektitle">
+      <span>This Week</span>
+      <span class="weeknote" id="weekNote"></span>
+    </div>
+    <div class="week" id="week"></div>
+  </main>
+
+  <footer class="bottom">
+    <section class="card suncard" id="sunCard"></section>
+    <section class="card nestcard" id="nestCard"></section>
+    <section class="card shopcard">
+      <div class="blocktitle">Shopping List <span class="shopnote" id="shopNote"></span></div>
+      <div class="shop" id="shop"></div>
+    </section>
+  </footer>
+
+</div></div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

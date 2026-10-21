@@ -1,0 +1,273 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Monitor — 1920x1080 dashboard
+   Two palettes: .day (sunrise → sunset) and .night (sunset → sunrise)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --radius: 22px;
+  --gap: 22px;
+  --font: "Roboto", "Inter", "Helvetica Neue", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html.day {
+  --bg-1: #dfe7f2;
+  --bg-2: #f3f7fc;
+  --bg-3: #eef3fa;
+  --surface: rgba(255, 255, 255, 0.86);
+  --surface-2: rgba(255, 255, 255, 0.55);
+  --text: #101828;
+  --muted: #667085;
+  --faint: #98a2b3;
+  --line: rgba(16, 24, 40, 0.09);
+  --shadow: 0 14px 34px rgba(16, 24, 40, 0.09);
+  --accent: #2f6df6;
+  --sun: #e59400;
+  --moon: #3f61e0;
+  --cardtint: 0.20;
+  --icon-ink: #26405f;
+}
+
+html.night {
+  --bg-1: #04070d;
+  --bg-2: #0b1220;
+  --bg-3: #070c15;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.025);
+  --text: #eaf1fb;
+  --muted: #93a5c0;
+  --faint: #6b7d99;
+  --line: rgba(255, 255, 255, 0.10);
+  --shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --accent: #7aa7ff;
+  --sun: #ffc95c;
+  --moon: #a8c2ff;
+  --cardtint: 0.16;
+  --icon-ink: #cfe0ff;
+}
+
+* { box-sizing: border-box; }
+
+/* el primer pintado no se anima: la paleta entra de golpe, sin destello */
+html.booting *, html.booting { transition: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-3);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* el tablero se dibuja siempre en 1920x1080 y se escala a la pantalla */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(1200px 640px at 12% -10%, var(--bg-1), transparent 70%),
+    radial-gradient(1100px 700px at 92% 110%, var(--bg-2), transparent 72%),
+    var(--bg-3);
+  transition: background 2.4s ease;
+}
+
+.screen {
+  width: 1920px;
+  height: 1080px;
+  padding: 26px;
+  display: grid;
+  grid-template-rows: 228px 1fr 208px;
+  gap: var(--gap);
+  transform-origin: center center;
+  color: var(--text);
+  transition: color 2.4s ease;
+}
+
+.top    { display: grid; grid-template-columns: 556px 424px 1fr; gap: var(--gap); min-height: 0; }
+.bottom { display: grid; grid-template-columns: 352px 404px 1fr; gap: var(--gap); min-height: 0; }
+
+.card {
+  position: relative;
+  min-height: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 22px 24px;
+  transition: background 2.4s ease, border-color 2.4s ease, box-shadow 2.4s ease;
+}
+
+.blocktitle {
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+/* ── reloj ── */
+.clockcard { display: flex; flex-direction: column; justify-content: center; }
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 108px;
+  font-weight: 200;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+}
+.clock .ampm { font-size: 30px; font-weight: 500; letter-spacing: 0.04em; color: var(--muted); }
+.dateline { font-size: 30px; font-weight: 500; margin-top: 14px; letter-spacing: -0.01em; }
+.placeline {
+  display: flex; align-items: center; gap: 9px;
+  margin-top: 12px; font-size: 18px; color: var(--muted);
+}
+.placeline .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* ── clima ahora ── */
+.nowcard { display: flex; align-items: center; gap: 18px; }
+.nowicon svg { width: 116px; height: 116px; display: block; }
+.nowtext { display: flex; flex-direction: column; min-width: 0; }
+.nowtemp { font-size: 84px; font-weight: 200; line-height: 1; letter-spacing: -0.035em; }
+.nowtemp .deg { font-size: 42px; vertical-align: top; color: var(--muted); }
+.blocktitle .unit { color: var(--faint); font-size: 15px; }
+.nowdesc { font-size: 25px; font-weight: 500; margin-top: 8px; }
+.nowfeels { font-size: 20px; color: var(--muted); margin-top: 5px; }
+.nowextra { font-size: 17px; color: var(--faint); margin-top: 8px; }
+
+/* ── pronostico ── */
+.forecastcard { display: flex; flex-direction: column; }
+.forecast { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; min-height: 0; }
+.fday {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 6px 4px; border-radius: 16px; background: var(--surface-2);
+}
+.fday .flabel { font-size: 18px; font-weight: 600; letter-spacing: 0.02em; }
+.fday .ficon svg { width: 52px; height: 52px; display: block; }
+.fday .ftemps { display: flex; align-items: baseline; gap: 8px; font-weight: 500; }
+.fday .fhi { font-size: 26px; }
+.fday .flo { font-size: 20px; color: var(--muted); }
+.fday .frain { display: flex; align-items: center; gap: 5px; font-size: 17px; color: var(--accent); min-height: 22px; }
+.fday .frain svg { width: 15px; height: 15px; }
+.fday .frain.off { color: var(--faint); opacity: 0.55; }
+
+/* ── semana ── */
+.weekcard { display: flex; flex-direction: column; }
+.weektitle { display: flex; justify-content: space-between; align-items: baseline; }
+.weeknote { text-transform: none; letter-spacing: 0; font-size: 15px; color: var(--faint); }
+.week { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; min-height: 0; }
+.week.weekoff { display: block; }
+.daycol {
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  border-radius: 16px; padding: 10px 10px 8px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+}
+.daycol.today { border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2)); }
+.dayhead { padding: 2px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 9px;
+  min-height: 92px; display: flex; flex-direction: column; justify-content: flex-start; }
+.daynum { font-size: 40px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; }
+.dayname { font-size: 19px; font-weight: 600; margin-top: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.daysub { font-size: 15px; color: var(--faint); margin-top: 3px; white-space: nowrap; }
+.daycol.today .dayname { color: var(--accent); }
+.events { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+.evt {
+  border-radius: 12px; padding: 8px 11px 9px;
+  border-left: 4px solid var(--ev, var(--accent));
+  background: color-mix(in srgb, var(--ev, var(--accent)) 22%, transparent);
+  overflow: hidden;
+}
+.evt .etime { font-size: 16px; font-weight: 600; letter-spacing: 0.01em; opacity: 0.92; }
+.evt .etitle { font-size: 19px; font-weight: 500; line-height: 1.22; margin-top: 2px; }
+.evt .eloc { font-size: 15px; color: var(--muted); margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.evt.allday .etime { text-transform: uppercase; font-size: 14px; letter-spacing: 0.1em; color: var(--muted); }
+.evt.allday .etitle { font-weight: 600; }
+.empty { font-size: 17px; color: var(--faint); opacity: 0.6; padding: 4px; }
+.more { font-size: 15px; color: var(--muted); text-align: right; padding-top: 2px; }
+.daycol.sparse .evt { padding: 12px 13px 13px; }
+.daycol.sparse .evt .etitle { font-size: 21px; }
+.daycol.sparse .evt .etime { font-size: 17px; }
+.daycol.sparse .evt .eloc { font-size: 16px; }
+.daycol.sparse .events { gap: 11px; }
+.daycol.dense .evt .etitle { font-size: 17px; }
+.daycol.dense .evt .eloc { display: none; }
+.daycol.dense .daynum { font-size: 34px; }
+.daycol.denser .evt .etime { font-size: 14px; }
+.daycol.denser .evt { padding: 6px 9px; }
+
+/* ── sol ── */
+.suncard { display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+.sunrow { display: flex; align-items: center; gap: 14px; }
+.sunrow svg { width: 38px; height: 38px; flex: none; }
+.sunrow .stext { display: flex; flex-direction: column; }
+.sunrow .slabel { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.sunrow .stime { font-size: 34px; font-weight: 300; letter-spacing: -0.02em; }
+
+/* ── termostato ── */
+.nestcard { display: flex; flex-direction: column; justify-content: center; }
+.nesthead { display: flex; align-items: baseline; justify-content: space-between; }
+.nestname { font-size: 17px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.nestmode { font-size: 15px; color: var(--muted); }
+.nestbig { font-size: 70px; font-weight: 200; line-height: 1; letter-spacing: -0.035em; margin-top: 6px; }
+.nestbig .deg { font-size: 38px; vertical-align: top; color: var(--muted); }
+.nestmetrics { display: flex; gap: 26px; margin-top: 14px; }
+.metric { display: flex; align-items: center; gap: 9px; font-size: 22px; font-weight: 500; }
+.metric svg { width: 24px; height: 24px; color: var(--muted); }
+.metric .mlabel { font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); display: block; }
+
+/* ── lista del super ── */
+.shopcard { display: flex; flex-direction: column; }
+.shopcard .blocktitle { display: flex; justify-content: space-between; align-items: baseline; }
+.shopnote { text-transform: none; letter-spacing: 0; font-size: 15px; color: var(--faint); }
+.shop { flex: 1; min-height: 0; overflow: hidden; }
+.shopgrid { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  grid-template-rows: repeat(4, auto); gap: 6px 26px; align-content: start; }
+.shopitem { display: flex; align-items: center; gap: 10px; font-size: 22px; min-width: 0; }
+.shopitem .box {
+  flex: none; width: 17px; height: 17px; border-radius: 5px;
+  border: 2px solid color-mix(in srgb, var(--text) 34%, transparent);
+}
+.shopitem .txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shopitem.pinned { font-weight: 600; }
+.shopitem.pinned .dot { flex: none; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
+.shoppinned { display: grid; gap: 6px 26px; padding-bottom: 10px; margin-bottom: 10px;
+  border-bottom: 1px dashed var(--line); }
+.shoppinned .shopitem { font-size: 23px; }
+.shopempty { font-size: 20px; color: var(--faint); }
+
+/* ── fallos de fuente ── */
+.offline {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  height: 100%; font-size: 19px; color: var(--muted); text-align: center; padding: 10px;
+}
+.offline svg { width: 26px; height: 26px; color: var(--faint); flex: none; }
+.offline .offinner { display: flex; align-items: center; gap: 14px; max-width: 80%; }
+.offline .offtitle { font-size: 21px; color: var(--text); }
+.offline .offreason { font-size: 15px; color: var(--faint); margin-top: 6px; line-height: 1.35; }
+.badge {
+  font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--faint); border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 9px; margin-left: 8px;
+}
+.stale { position: absolute; top: 14px; right: 16px; font-size: 13px; color: var(--faint);
+  letter-spacing: 0.08em; text-transform: uppercase; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px);
+  background: rgba(10, 14, 22, 0.9); color: #eaf1fb; padding: 12px 20px;
+  border-radius: 12px; font-size: 16px; opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease; z-index: 50;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }

@@ -1,0 +1,16 @@
+[Unit]
+Description=Monitor (tablero de pared) — instancia de la Pi
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/monitor
+ExecStart=/usr/bin/python3 %h/monitor/server.py --port 8770
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

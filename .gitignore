@@ -1,0 +1,18 @@
+# Secretos y datos personales: nunca van al repositorio
+# (las direcciones iCal secretas de cada calendario)
+calendars.json
+# (ubicación exacta, cuenta, proyecto de Todoist, IDs del Nest)
+config.json
+# (requisitos personales)
+Requisición.md
+# (respaldos de la configuración)
+*.respaldo-*
+# (capturas con datos reales de la casa)
+screenshots/
+
+# Basura de trabajo
+__pycache__/
+*.pyc
+*.log
+.venv/
+node_modules/

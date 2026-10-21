@@ -1,0 +1,38 @@
+{
+  "location": {
+    "label": "Home · Houston, TX",
+    "lat": 29.7604,
+    "lon": -95.3698,
+    "timezone": "America/Chicago",
+    "units": "celsius"
+  },
+  "week": {
+    "days": 7,
+    "startOffset": 0,
+    "forecastDays": 5,
+    "forecastStartsToday": true
+  },
+  "calendar": {
+    "configFile": "~/monitor/calendars.json",
+    "note": "las direcciones secretas iCal viven aparte, en calendars.json (600)",
+    "defaultAccount": "me@example.com"
+  },
+  "todoist": {
+    "enabled": true,
+    "tokenFile": "~/.todoist.cred",
+    "project": "Shopping List",
+    "pinnedCount": 2
+  },
+  "nest": {
+    "enabled": true,
+    "mode": "sdm",
+    "projectId": "",
+    "deviceId": "",
+    "refreshTokenFile": "~/.hermes/nest_token.json"
+  },
+  "theme": {
+    "dayStart": "sunrise",
+    "nightStart": "sunset",
+    "crossfadeMinutes": 20
+  }
+}
