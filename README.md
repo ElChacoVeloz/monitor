@@ -48,6 +48,7 @@ kiosco que no debe cambiar de tema).
 | Termostato | Google SDM (Nest) | 2 min |
 | Alertas de clima | NWS (`api.weather.gov`, avisos activos para el punto de la casa) | 10 min |
 | Ruta a la escuela | OSRM (línea base, sin tráfico) | 5 min |
+| Tráfico en vivo de la ruta | Google Maps, medido fuera del tablero (`traffic-live.py`) | 10 min |
 
 **El calendario es solo de consulta.** El tablero lee los feeds `.ics` y nada
 más: no da de alta, no modifica y no borra eventos. Y como lee la dirección
@@ -78,6 +79,31 @@ no se desfasa si la página se recarga.
 Para probar sin esperar la hora: `?now=07:55` (o `?now=2026-10-24T15:10` para un
 día concreto) decide la tarjeta como si fuera esa hora, y `?slot=sun|alerts|route`
 la fuerza. Nada de eso manda si no se pasa el parámetro.
+
+## Tráfico en vivo de la ruta (opcional)
+
+La tarjeta de ruta puede enseñar el **tiempo real** en lugar de la línea base. Como
+Google Maps no da eso por API gratis, el tablero no lo va a buscar: lo mide otra
+máquina y se lo deja en un archivo.
+
+1. `traffic-live.py` (en la máquina que tenga Chromium) abre la ruta en Google Maps
+   headless, lee el primer resultado y escribe `~/.hermes/traffic.json`.
+2. Lo empuja a la Pi por SSH (`~/.ssh/<llave>`, host `monitor`).
+3. El servidor lo lee en cada consulta y lo pega a `route.live` **solo si tiene
+   menos de `route.liveMaxAgeMinutes`** (25 por omisión). Si está viejo o no
+   existe, la tarjeta cae sola a la línea base y se quita el chip `live`: nunca
+   se enseña un número rancio como si fuera de ahora.
+
+```bash
+python3 traffic-live.py            # mide si toca (ventanas de config.json) y empuja
+python3 traffic-live.py --force    # mide aunque esté fuera de la ventana
+python3 traffic-live.py --print    # mide y muestra, sin escribir nada
+python3 traffic-live.py --push-only
+```
+
+Se agenda cada 10 minutos; el script se sale en silencio fuera de las ventanas de
+la ruta, así que no gasta nada el resto del día. **No necesita el agente**: es
+`no_agent`, y si falla avisa cuando mucho una vez por hora.
 
 ## Los calendarios — `calendars.json`
 
@@ -185,6 +211,8 @@ lo deja estable.
                 "from": { "label": "Home", "lat": 29.7604, "lon": -95.3698 },
                 "to":   { "label": "School", "lat": 29.7170, "lon": -95.3690 },
                 "weekdaysOnly": true,
+                "liveFile": "~/.hermes/traffic.json",
+                "liveMaxAgeMinutes": 25,
                 "windows": [ { "start": "07:50", "end": "09:00", "label": "Drop-off" },
                              { "start": "14:30", "end": "17:00", "label": "Pick-up" } ] }
 }

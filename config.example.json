@@ -59,7 +59,9 @@
         "end": "17:00",
         "label": "Pick-up"
       }
-    ]
+    ],
+    "liveFile": "~/.hermes/traffic.json",
+    "liveMaxAgeMinutes": 25
   },
   "theme": {
     "dayStart": "sunrise",

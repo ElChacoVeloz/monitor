@@ -393,10 +393,19 @@ function routeCard(win) {
   const r = DATA.route;
   const dest = String(r.destination || "School").replace(/\s*\(.*\)\s*$/, "");
   const when = (win && win.label) ? win.label : "Route";
+  const live = r.live;                       // tráfico medido hace < 25 min
+  const min = live ? live.min : r.min;
+  const km = live ? live.km : r.km;
+  const meta = live
+    ? `${km} km · via ${live.via || "fastest route"}`
+    : `${km} km · baseline (no traffic)`;
+  const chip = live ? `<span class="livechip">live</span>` : "";
   return `<div class="slot route">
     <div class="blocktitle">Route to School <span class="routewhen">${escapeHtml(when)}</span></div>
-    <div class="routemin">${r.min}<span class="unit">min</span></div>
-    <div class="routemeta">${r.km} km · baseline (no traffic)</div>
+    <div class="routemain">
+      <div class="routemin">${min}<span class="unit">min</span></div>${chip}
+    </div>
+    <div class="routemeta">${escapeHtml(meta)}</div>
     <div class="routefoot">${escapeHtml(dest)}</div>
   </div>`;
 }

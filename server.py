@@ -525,6 +525,31 @@ def route_info(cfg: dict, mock: bool) -> dict:
             "destination": dest, "profile": profile, "source": "OSRM"}
 
 
+def fresh_live_route(cfg: dict) -> dict | None:
+    """El tráfico en vivo que deja traffic-live.py (TheGrid2), si no está viejo.
+
+    Si el archivo no existe o ya pasó el límite de edad, se devuelve None y la
+    tarjeta se queda con la línea base de OSRM: nunca se enseña un dato rancio
+    como si fuera de ahora.
+    """
+    r = cfg.get("route") or {}
+    path = Path(os.path.expanduser(r.get("liveFile") or "~/.hermes/traffic.json"))
+    max_age = float(r.get("liveMaxAgeMinutes", 25))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        when = datetime.fromisoformat(str(data["measuredAt"]))
+    except Exception:  # noqa: BLE001
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=ZoneInfo(cfg["location"]["timezone"]))
+    age_min = (datetime.now(ZoneInfo(cfg["location"]["timezone"])) - when).total_seconds() / 60
+    if age_min < 0 or age_min > max_age:
+        return None
+    return {"min": data.get("min"), "km": data.get("km"), "via": data.get("via") or "",
+            "note": data.get("note") or "", "ageMin": round(age_min),
+            "measuredAt": data.get("measuredAt")}
+
+
 # --------------------------------------------------------------------- Nest
 
 
@@ -618,6 +643,13 @@ def build_payload(cfg: dict, mock: bool) -> dict:
                 out["sources"][name] = {"ok": True, "stale": bool(meta.get("stale")),
                                         "error": short_error(str(meta.get("error")))
                                         if meta.get("error") else None}
+    # el tráfico en vivo (traffic-live.py en TheGrid2) se refresca fuera del cache
+    if isinstance(out.get("route"), dict):
+        live = fresh_live_route(cfg)
+        if live:
+            out["route"]["live"] = live
+        else:
+            out["route"].pop("live", None)
     return out
 
 
