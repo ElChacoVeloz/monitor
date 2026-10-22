@@ -214,6 +214,33 @@ html, body {
 .sunrow .slabel { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
 .sunrow .stime { font-size: 34px; font-weight: 300; letter-spacing: -0.02em; }
 
+/* ── la tarjeta que rota: amanecer/anochecer · alerta · ruta ── */
+.suncard.is-alert, .suncard.is-route { justify-content: flex-start; gap: 0; }
+.slot { display: flex; flex-direction: column; height: 100%; min-height: 0; width: 100%; }
+.slot .blocktitle { margin-bottom: 6px; display: flex; align-items: baseline; gap: 8px; }
+.slotcount { font-size: 12px; letter-spacing: 0.06em; color: var(--faint);
+  border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; }
+.alevent { font-size: 27px; font-weight: 600; line-height: 1.12; letter-spacing: -0.015em;
+  color: var(--sev, var(--text)); }
+.alhead { font-size: 15px; color: var(--muted); line-height: 1.32; margin-top: 9px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.alfoot { margin-top: auto; font-size: 15px; color: var(--faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sev-extreme, .sev-severe { --sev: #e5484d; }
+.sev-moderate { --sev: #e8a33d; }
+.sev-minor { --sev: #0d9aa8; }
+.sev-unknown { --sev: #8a94a6; }
+
+.routemin { margin-top: 2px; }
+.routemin { font-size: 66px; font-weight: 200; letter-spacing: -0.045em; line-height: 1; }
+.routemin .unit { font-size: 24px; font-weight: 400; color: var(--muted); margin-left: 5px; }
+.routemeta { font-size: 16px; color: var(--muted); line-height: 1.25; margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.routefoot { margin-top: auto; font-size: 16px; color: var(--faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.routewhen { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--faint);
+  white-space: nowrap; margin-left: auto; }
+
 /* ── termostato ── */
 .nestcard { display: flex; flex-direction: column; justify-content: center; }
 .nesthead { display: flex; align-items: baseline; justify-content: space-between; }

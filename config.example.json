@@ -24,11 +24,42 @@
     "pinnedCount": 2
   },
   "nest": {
-    "enabled": true,
+    "enabled": false,
     "mode": "sdm",
     "projectId": "",
     "deviceId": "",
     "refreshTokenFile": "~/.hermes/nest_token.json"
+  },
+  "alerts": {
+    "enabled": true,
+    "userAgent": "monitor-dashboard/1.0 (wall display)"
+  },
+  "route": {
+    "enabled": true,
+    "profile": "driving",
+    "from": {
+      "label": "Home",
+      "lat": 29.7604,
+      "lon": -95.3698
+    },
+    "to": {
+      "label": "School",
+      "lat": 29.717,
+      "lon": -95.369
+    },
+    "weekdaysOnly": true,
+    "windows": [
+      {
+        "start": "07:50",
+        "end": "09:00",
+        "label": "Drop-off"
+      },
+      {
+        "start": "14:30",
+        "end": "17:00",
+        "label": "Pick-up"
+      }
+    ]
   },
   "theme": {
     "dayStart": "sunrise",

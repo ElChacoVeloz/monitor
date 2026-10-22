@@ -454,6 +454,77 @@ def todoist_list(cfg: dict, mock: bool) -> dict:
             "pinnedCount": pinned}
 
 
+# ------------------------------------------------------------------- alertas
+
+
+SEVERITY_ORDER = {"Extreme": 0, "Severe": 1, "Moderate": 2, "Minor": 3, "Unknown": 4}
+
+
+def weather_alerts(cfg: dict, mock: bool) -> dict:
+    """Avisos oficiales del NWS (api.weather.gov) para el punto de la casa."""
+    a = cfg.get("alerts") or {}
+    if mock:
+        return {"count": 1, "source": "demo",
+                "items": [{"event": "Air Quality Alert", "severity": "Moderate",
+                           "headline": "Air Quality Alert issued October 21 at 3:49PM CDT "
+                                       "by NWS Houston/Galveston TX",
+                           "area": "Inland Harris", "ends": None}]}
+    if not a.get("enabled", True):
+        raise RuntimeError("alertas apagadas en config.json")
+
+    lat = a.get("lat") or cfg["location"]["lat"]
+    lon = a.get("lon") or cfg["location"]["lon"]
+    url = f"https://api.weather.gov/alerts/active?point={lat},{lon}"
+    raw = http_json(url, headers={
+        "User-Agent": a.get("userAgent", "monitor-dashboard/1.0 (wall display)"),
+        "Accept": "application/geo+json",
+    }, timeout=25)
+
+    items = []
+    for feature in raw.get("features", []):
+        p = feature.get("properties") or {}
+        if (p.get("status") or "").lower() == "test":
+            continue
+        items.append({
+            "event": p.get("event") or "Weather alert",
+            "severity": p.get("severity") or "Unknown",
+            "headline": (p.get("headline") or "").strip(),
+            "area": (p.get("areaDesc") or "").split(";")[0].strip(),
+            "ends": p.get("ends") or p.get("expires"),
+            "onset": p.get("onset") or p.get("effective"),
+        })
+    items.sort(key=lambda i: SEVERITY_ORDER.get(i["severity"], 9))
+    return {"count": len(items), "items": items[:4], "source": "api.weather.gov"}
+
+
+# --------------------------------------------------------------------- ruta
+
+
+def route_info(cfg: dict, mock: bool) -> dict:
+    """Ruta en coche casa -> escuela (OSRM, línea base sin tráfico)."""
+    r = cfg.get("route") or {}
+    dest = (r.get("to") or {}).get("label") or "School"
+    if mock:
+        return {"km": 11.2, "min": 13, "destination": dest, "profile": "driving",
+                "source": "demo"}
+    if not r.get("enabled", True):
+        raise RuntimeError("ruta apagada en config.json")
+
+    o, d = r.get("from") or {}, r.get("to") or {}
+    if not all(k in o for k in ("lat", "lon")) or not all(k in d for k in ("lat", "lon")):
+        raise RuntimeError("faltan coordenadas de origen/destino en config.json (route)")
+    profile = r.get("profile", "driving")
+    url = (f"https://router.project-osrm.org/route/v1/{profile}/"
+           f"{o['lon']},{o['lat']};{d['lon']},{d['lat']}?overview=false")
+    raw = http_json(url, timeout=20)
+    route = (raw.get("routes") or [None])[0]
+    if not route:
+        raise RuntimeError("OSRM no devolvió ninguna ruta")
+    return {"km": round(route["distance"] / 1000, 1),
+            "min": round(route["duration"] / 60),
+            "destination": dest, "profile": profile, "source": "OSRM"}
+
+
 # --------------------------------------------------------------------- Nest
 
 
@@ -517,14 +588,23 @@ def build_payload(cfg: dict, mock: bool) -> dict:
         "calendar": (300, lambda: calendar_week(cfg, mock)),
         "todoist": (300, lambda: todoist_list(cfg, mock)),
         "nest": (120, lambda: nest_state(cfg, mock)),
+        "alerts": (600, lambda: weather_alerts(cfg, mock)),
+        "route": (300, lambda: route_info(cfg, mock)),
     }
     out: dict = {"generatedAt": now.isoformat(), "version": web_version(),
                  "timezone": cfg["location"]["timezone"],
                  "today": now.date().isoformat(), "now": now.isoformat(),
                  "locationLabel": cfg["location"].get("label", ""),
-                 "config": {"week": cfg["week"], "theme": cfg.get("theme", {})},
+                 "config": {"week": cfg["week"], "theme": cfg.get("theme", {}),
+                            "slot": {
+                                "routeWindows": (cfg.get("route") or {}).get("windows") or [],
+                                "routeWeekdaysOnly": (cfg.get("route") or {}).get(
+                                    "weekdaysOnly", True),
+                                "rotateSeconds": (cfg.get("alerts") or {}).get(
+                                    "rotateSeconds", 300),
+                            }},
                  "sources": {}}
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=6) as pool:
         futures = {name: pool.submit(CACHE.run, name, ttl, fn)
                    for name, (ttl, fn) in jobs.items()}
         for name, fut in futures.items():

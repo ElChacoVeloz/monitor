@@ -46,6 +46,8 @@ kiosco que no debe cambiar de tema).
 | Semana de calendario | **las direcciones iCal secretas de cada calendario** | 5 min |
 | Lista del súper | Todoist API v1 (el proyecto que diga `config.json`) | 5 min |
 | Termostato | Google SDM (Nest) | 2 min |
+| Alertas de clima | NWS (`api.weather.gov`, avisos activos para el punto de la casa) | 10 min |
+| Ruta a la escuela | OSRM (línea base, sin tráfico) | 5 min |
 
 **El calendario es solo de consulta.** El tablero lee los feeds `.ics` y nada
 más: no da de alta, no modifica y no borra eventos. Y como lee la dirección
@@ -57,6 +59,25 @@ aparece el motivo en una línea. Nunca se inventan datos.
 
 La página se refresca cada 60 s y se escala sola de 1920x1080 a la pantalla que
 la muestre (kiosco, tablet, TV). El reloj se actualiza cada segundo.
+
+## La tarjeta que rota (sol · alertas · ruta)
+
+La tarjeta de abajo a la izquierda no es fija: cambia según la hora y si hay
+avisos del clima.
+
+| Situación | Qué se ve |
+|---|---|
+| Día de semana **07:50–09:00** o **14:30–17:00** | la **ruta a la escuela** (permanece toda la ventana) |
+| Fuera de esas ventanas **y hay alerta** | rota cada 5 minutos: **alerta → amanecer/atardecer → alerta…** |
+| Fuera de esas ventanas **y no hay alerta** | se queda **amanecer/atardecer** |
+
+Las ventanas y los minutos de rotación salen de `config.json`
+(`route.windows`, `alerts.rotateSeconds`); la rotación se ancla al reloj, así que
+no se desfasa si la página se recarga.
+
+Para probar sin esperar la hora: `?now=07:55` (o `?now=2026-10-24T15:10` para un
+día concreto) decide la tarjeta como si fuera esa hora, y `?slot=sun|alerts|route`
+la fuerza. Nada de eso manda si no se pasa el parámetro.
 
 ## Los calendarios — `calendars.json`
 
@@ -158,7 +179,14 @@ lo deja estable.
   "todoist":  { "tokenFile": "~/.todoist.cred", "project": "Shopping List",
                 "pinnedCount": 2 },
   "nest":     { "enabled": false, "projectId": "<uuid del proyecto>", "deviceId": "",
-                "refreshTokenFile": "~/.hermes/nest_token.json" }
+                "refreshTokenFile": "~/.hermes/nest_token.json" },
+  "alerts":   { "enabled": true, "userAgent": "monitor-dashboard/1.0 (wall display)" },
+  "route":    { "enabled": true, "profile": "driving",
+                "from": { "label": "Home", "lat": 29.7604, "lon": -95.3698 },
+                "to":   { "label": "School", "lat": 29.7170, "lon": -95.3690 },
+                "weekdaysOnly": true,
+                "windows": [ { "start": "07:50", "end": "09:00", "label": "Drop-off" },
+                             { "start": "14:30", "end": "17:00", "label": "Pick-up" } ] }
 }
 ```
 

@@ -306,18 +306,118 @@ function renderWeek() {
   note.title = (cal.errors || []).map((e) => `${e.calendar}: ${e.error}`).join("\n");
 }
 
-function renderSun() {
-  const w = DATA.weather;
-  const card = $("sunCard");
-  if (!w || !w.sun || !w.sun.sunrise) {
-    card.innerHTML = offlineBox("Sun times unavailable");
-    return;
+/* ── la tarjeta de abajo a la izquierda rota: sol / alertas / ruta ── */
+
+function hhmmInTZ(d) {
+  return fmt({ hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
+}
+function weekdayInTZ(d) {
+  const short = fmt({ weekday: "short" }).format(d);
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(short);
+}
+/* ?now=HH:MM (o ?now=AAAA-MM-DDTHH:MM) fuerza el reloj solo para decidir qué
+   tarjeta toca; es para probar las ventanas sin esperar la hora. */
+function slotNow() {
+  const forced = new URLSearchParams(location.search).get("now");
+  const now = new Date();
+  if (!forced) return now;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(forced)) {
+    const d = new Date(forced);
+    if (!isNaN(d)) return d;
   }
+  if (/^\d{1,2}:\d{2}$/.test(forced)) {
+    const [h, m] = forced.split(":").map(Number);
+    now.setHours(h, m, 0, 0);
+  }
+  return now;
+}
+
+function slotState() {
+  const forced = new URLSearchParams(location.search).get("slot");
+  if (forced) return { kind: forced, why: "forzado por ?slot" };
+
+  const slotCfg = (DATA.config && DATA.config.slot) || {};
+  const now = slotNow();
+  const t = hhmmInTZ(now);
+  const wd = weekdayInTZ(now);
+  const isWeekday = wd >= 1 && wd <= 5;
+
+  /* 1) la ruta manda en sus ventanas (L-V) */
+  const windows = slotCfg.routeWindows || [];
+  if (windows.length && DATA.route && (!slotCfg.routeWeekdaysOnly || isWeekday)) {
+    for (const w of windows) {
+      if (t >= w.start && t < w.end) return { kind: "route", window: w };
+    }
+  }
+
+  /* 2) con alerta, rota cada N segundos entre alerta y sol */
+  if (DATA.alerts && DATA.alerts.count > 0) {
+    const rotate = (slotCfg.rotateSeconds || 300) * 1000;
+    const phase = Math.floor(now.getTime() / rotate) % 2;   // 0 = alerta, 1 = sol
+    return { kind: phase === 0 ? "alerts" : "sun" };
+  }
+
+  /* 3) sin alerta se queda el sol */
+  return { kind: "sun" };
+}
+
+const SEV_CLASS = { Extreme: "sev-extreme", Severe: "sev-severe", Moderate: "sev-moderate",
+                    Minor: "sev-minor", Unknown: "sev-unknown" };
+
+function alertCard() {
+  const a = DATA.alerts;
+  const main = a.items && a.items[0];
+  if (!main) return sunCard();
+  const sev = SEV_CLASS[main.severity] || "sev-unknown";
+  const count = a.count > 1 ? ` <span class="slotcount">+${a.count - 1}</span>` : "";
+  const ends = main.ends
+    ? `ends ${fmt({ hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(main.ends))}`
+    : (main.area || "");
+  return `<div class="slot sev ${sev}">
+    <div class="blocktitle">Weather Alert${count}</div>
+    <div class="alevent">${escapeHtml(main.event)}</div>
+    <div class="alhead">${escapeHtml(main.headline || main.area || "")}</div>
+    <div class="alfoot">${escapeHtml(ends)}</div>
+  </div>`;
+}
+
+function routeCard(win) {
+  const r = DATA.route;
+  const dest = String(r.destination || "School").replace(/\s*\(.*\)\s*$/, "");
+  const when = (win && win.label) ? win.label : "Route";
+  return `<div class="slot route">
+    <div class="blocktitle">Route to School <span class="routewhen">${escapeHtml(when)}</span></div>
+    <div class="routemin">${r.min}<span class="unit">min</span></div>
+    <div class="routemeta">${r.km} km · baseline (no traffic)</div>
+    <div class="routefoot">${escapeHtml(dest)}</div>
+  </div>`;
+}
+
+let lastSlot = "";
+function renderSlot(force) {
+  const state = slotState();
+  const sig = [state.kind, DATA && DATA.alerts ? DATA.alerts.count : 0,
+               DATA && DATA.alerts && DATA.alerts.items[0] ? DATA.alerts.items[0].event : "",
+               DATA && DATA.route ? `${DATA.route.min}/${DATA.route.km}` : "",
+               state.window ? state.window.label : ""].join("|");
+  if (!force && sig === lastSlot) return;
+  lastSlot = sig;
+  const card = $("sunCard");
+  card.classList.toggle("is-alert", state.kind === "alerts");
+  card.classList.toggle("is-route", state.kind === "route");
+  if (state.kind === "alerts") { card.innerHTML = alertCard(); return; }
+  if (state.kind === "route") { card.innerHTML = routeCard(state.window); return; }
+  card.innerHTML = sunCard();
+}
+
+function sunCard() {
+  const w = DATA.weather;
+  if (!w || !w.sun || !w.sun.sunrise) return offlineBox("Sun times unavailable");
   const f = (iso) => {
     const d = new Date(iso);
     return isNaN(d) ? "--" : fmt({ hour: "numeric", minute: "2-digit", hour12: true }).format(d);
   };
-  card.innerHTML = `
+  return `
     <div class="sunrow">${ICO.sunrise.replace("currentColor", "var(--sun)")}
       <div class="stext"><span class="slabel">Sunrise</span>
       <span class="stime">${f(w.sun.sunrise)}</span></div></div>
@@ -416,7 +516,7 @@ function render() {
   renderNow();
   renderForecast();
   renderWeek();
-  renderSun();
+  renderSlot(true);
   renderNest();
   renderShop();
 }
@@ -455,7 +555,7 @@ function toast(msg) {
 }
 
 /* cada segundo el reloj; cada minuto revisar tema; cada 60 s datos frescos */
-setInterval(renderClock, 1000);
+setInterval(() => { renderClock(); if (DATA) renderSlot(); }, 1000);
 setInterval(() => { applyTheme(); }, 30000);
 setInterval(load, 60000);
 
