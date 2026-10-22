@@ -370,9 +370,17 @@ function alertCard() {
   if (!main) return sunCard();
   const sev = SEV_CLASS[main.severity] || "sev-unknown";
   const count = a.count > 1 ? ` <span class="slotcount">+${a.count - 1}</span>` : "";
-  const ends = main.ends
-    ? `ends ${fmt({ hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(main.ends))}`
-    : (main.area || "");
+  /* el fin del aviso: si no es hoy se dice el día, para no leer "ends 8:00 PM"
+     cuando en realidad termina mañana a esa hora */
+  let ends = main.area || "";
+  if (main.ends) {
+    const endDate = new Date(main.ends);
+    const key = (d) => fmt({ year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+    const time = fmt({ hour: "numeric", minute: "2-digit", hour12: true }).format(endDate);
+    ends = key(endDate) === key(new Date())
+      ? `ends ${time}`
+      : `until ${fmt({ weekday: "short" }).format(endDate)} ${time}`;
+  }
   return `<div class="slot sev ${sev}">
     <div class="blocktitle">Weather Alert${count}</div>
     <div class="alevent">${escapeHtml(main.event)}</div>
