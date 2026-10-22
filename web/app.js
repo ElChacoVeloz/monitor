@@ -396,9 +396,11 @@ function routeCard(win) {
   const live = r.live;                       // tráfico medido hace < 25 min
   const min = live ? live.min : r.min;
   const km = live ? live.km : r.km;
+  /* sin dato en vivo, que se note: si el medidor se rompe, la tarjeta lo dice
+     en vez de hacerse la que da el tiempo real */
   const meta = live
     ? `${km} km · via ${live.via || "fastest route"}`
-    : `${km} km · baseline (no traffic)`;
+    : `${km} km · baseline (no traffic)` + (win ? " · no live data" : "");
   const chip = live ? `<span class="livechip">live</span>` : "";
   return `<div class="slot route">
     <div class="blocktitle">Route to School <span class="routewhen">${escapeHtml(when)}</span></div>
