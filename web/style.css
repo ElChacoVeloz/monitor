@@ -93,9 +93,14 @@ html, body {
 .radarcard .blocktitle { display: flex; justify-content: space-between; align-items: baseline;
   gap: 8px; margin-bottom: 8px; }
 .radarwhen { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--faint); }
-.radarcard img { flex: 1 1 auto; min-height: 0; width: 100%; display: block;
-  object-fit: cover; object-position: center center; border-radius: 10px;
-  background: #0a0f14; opacity: 0.95; transition: opacity 0.4s ease; }
+.radarframe { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+  border-radius: 10px; background: #0a0f14; }
+.radarcard img { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  object-fit: cover; object-position: center center; opacity: 0.95;
+  transition: opacity 0.4s ease, transform 0.6s ease;
+  /* acercamiento: se escala alrededor del punto de la casa, no del centro del GIF */
+  transform: scale(var(--radar-zoom, 1.8));
+  transform-origin: var(--radar-x, 46%) var(--radar-y, 42%); }
 .radarcard img.failed { opacity: 0.25; }
 /* de noche el mapa del NWS es muy claro: se baja un poco para que no deslumbre */
 .night .radarcard img { opacity: 0.82; }

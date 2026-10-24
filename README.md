@@ -102,6 +102,13 @@ https://radar.weather.gov/ridge/standard/KHGX_0.gif?t=<bucket de 5 min>
   tarjeta se atenúa y conserva el último frame bueno.
 - Cambiar de sitio es cambiar `KHGX` por el código de otro radar (p. ej. `KEWX`
   San Antonio, `KFWD` Dallas).
+- **Acercamiento**: `radar.zoom` (1.0–2.5) y `radar.focusX/focusY` en % de la
+  imagen dicen cuánto y alrededor de qué punto se escala; por omisión 1.8 y el
+  punto de la casa, así que la casa queda fija en el encuadre. Para probar sin
+  desplegar: `?zoom=2.6`. **Más de ~2.5 no vale la pena**: el GIF del NWS mide
+  600×550 y arriba de eso se pixelean las calles. Para un zoom de barrio de
+  verdad haría falta un origen de tiles (RainViewer + un mapa base), que cambia
+  el look porque esas capas vienen sin calles.
 
 ## Tráfico en vivo de la ruta (opcional)
 

@@ -67,5 +67,10 @@
     "dayStart": "sunrise",
     "nightStart": "sunset",
     "crossfadeMinutes": 20
+  },
+  "radar": {
+    "zoom": 1.8,
+    "focusX": 43.5,
+    "focusY": 45
   }
 }

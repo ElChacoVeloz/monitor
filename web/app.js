@@ -465,6 +465,14 @@ function renderRadar() {
     img.addEventListener("load", () => img.classList.remove("failed"));
     img.addEventListener("error", () => img.classList.add("failed"));
   }
+  const rc = (DATA.config && DATA.config.radar) || {};
+  /* ?zoom=2.4 fuerza el acercamiento para probar sin tocar la config */
+  const probado = parseFloat(new URLSearchParams(location.search).get("zoom") || "");
+  const zoom = Number.isFinite(probado) && probado > 0 ? probado : (rc.zoom || 1.8);
+  img.style.setProperty("--radar-zoom", String(zoom));
+  img.style.setProperty("--radar-x", `${rc.focusX ?? 46}%`);
+  img.style.setProperty("--radar-y", `${rc.focusY ?? 42}%`);
+
   const cuando = new Date(bucket * RADAR_BUCKET_MS);
   const etiqueta = $("radarWhen");
   if (etiqueta) {

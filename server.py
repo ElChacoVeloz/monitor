@@ -621,6 +621,7 @@ def build_payload(cfg: dict, mock: bool) -> dict:
                  "today": now.date().isoformat(), "now": now.isoformat(),
                  "locationLabel": cfg["location"].get("label", ""),
                  "config": {"week": cfg["week"], "theme": cfg.get("theme", {}),
+                            "radar": cfg.get("radar", {}),
                             "slot": {
                                 "routeWindows": (cfg.get("route") or {}).get("windows") or [],
                                 "routeWeekdaysOnly": (cfg.get("route") or {}).get(
