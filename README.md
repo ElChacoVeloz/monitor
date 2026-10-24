@@ -152,6 +152,11 @@ del plugin de Omarchy):
   encabezado (`1 calendar failing: …`) y los demás siguen.
 - **Colores**: el `.ics` no trae color, así que el de cada calendario se fija en
   `calendars.json` (`--color`), y es el que pinta la barra y el fondo del evento.
+  Un color por calendario y **sin repetir ni parecerse**: si dos calendarios caen
+  en la misma familia (dos rojos, o naranja junto a amarillo), a 3 metros se leen
+  igual y la columna deja de servir. La barra izquierda (6 px) es la que lleva el
+  color saturado; el relleno va al 32 % para que el tinte se note sin comerse el
+  texto.
 
 ## El termostato — `nest-setup.py`
 
