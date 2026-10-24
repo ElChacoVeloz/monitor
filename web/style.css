@@ -86,7 +86,19 @@ html, body {
 }
 
 .top    { display: grid; grid-template-columns: 556px 424px 1fr; gap: var(--gap); min-height: 0; }
-.bottom { display: grid; grid-template-columns: 352px 404px 1fr; gap: var(--gap); min-height: 0; }
+.bottom { display: grid; grid-template-columns: 352px 344px 396px 1fr; gap: var(--gap); min-height: 0; }
+
+/* radar del NWS: se pide el frame nuevo cada 5 min (cache-bust por bucket) */
+.radarcard { display: flex; flex-direction: column; padding: 16px 16px 14px; overflow: hidden; }
+.radarcard .blocktitle { display: flex; justify-content: space-between; align-items: baseline;
+  gap: 8px; margin-bottom: 8px; }
+.radarwhen { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--faint); }
+.radarcard img { flex: 1 1 auto; min-height: 0; width: 100%; display: block;
+  object-fit: cover; object-position: center center; border-radius: 10px;
+  background: #0a0f14; opacity: 0.95; transition: opacity 0.4s ease; }
+.radarcard img.failed { opacity: 0.25; }
+/* de noche el mapa del NWS es muy claro: se baja un poco para que no deslumbre */
+.night .radarcard img { opacity: 0.82; }
 
 .card {
   position: relative;

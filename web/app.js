@@ -445,6 +445,33 @@ function sunCard() {
       <span class="stime">${f(w.sun.sunset)}</span></div></div>`;
 }
 
+/* ── radar del NWS (KHGX = Houston), sin API ni llave ──
+   Se pide un frame nuevo cada 5 minutos: el bucket entra en la URL para que el
+   navegador no se quede con la imagen vieja. Si el NWS no contesta, la tarjeta se
+   atenúa y se queda el último frame bueno en pantalla. */
+const RADAR_URL = "https://radar.weather.gov/ridge/standard/KHGX_0.gif";
+const RADAR_BUCKET_MS = 5 * 60 * 1000;
+
+function renderRadar() {
+  const img = $("radarImg");
+  if (!img) return;
+  const bucket = Math.floor(Date.now() / RADAR_BUCKET_MS);
+  if (img.dataset.b !== String(bucket)) {
+    img.dataset.b = String(bucket);
+    img.src = `${RADAR_URL}?t=${bucket}`;
+  }
+  if (!img.dataset.wired) {
+    img.dataset.wired = "1";
+    img.addEventListener("load", () => img.classList.remove("failed"));
+    img.addEventListener("error", () => img.classList.add("failed"));
+  }
+  const cuando = new Date(bucket * RADAR_BUCKET_MS);
+  const etiqueta = $("radarWhen");
+  if (etiqueta) {
+    etiqueta.textContent = fmt({ hour: "numeric", minute: "2-digit", hour12: true }).format(cuando);
+  }
+}
+
 function renderNest() {
   const card = $("nestCard");
   const n = DATA.nest;
@@ -536,6 +563,7 @@ function render() {
   renderForecast();
   renderWeek();
   renderSlot(true);
+  renderRadar();
   renderNest();
   renderShop();
 }

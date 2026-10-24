@@ -49,6 +49,7 @@ kiosco que no debe cambiar de tema).
 | Alertas de clima | NWS (`api.weather.gov`, avisos activos para el punto de la casa) | 10 min |
 | Ruta a la escuela | OSRM (línea base, sin tráfico) | 5 min |
 | Tráfico en vivo de la ruta | Google Maps, medido fuera del tablero (`traffic-live.py`) | 10 min |
+| Radar | NWS `radar.weather.gov`, GIF del sitio KHGX (Houston), sin API ni llave | 5 min |
 
 **El calendario es solo de consulta.** El tablero lee los feeds `.ics` y nada
 más: no da de alta, no modifica y no borra eventos. Y como lee la dirección
@@ -79,6 +80,28 @@ no se desfasa si la página se recarga.
 Para probar sin esperar la hora: `?now=07:55` (o `?now=2026-10-24T15:10` para un
 día concreto) decide la tarjeta como si fuera esa hora, y `?slot=sun|alerts|route`
 la fuerza. Nada de eso manda si no se pasa el parámetro.
+
+## Radar (sin llave)
+
+La fila de abajo lleva cuatro tarjetas: **amanecer/atardecer (o alerta, o ruta) ·
+radar · termostato · lista del súper**. El radar es el frame del NWS para el sitio
+**KHGX** (Houston), el mismo que usa el panel de Home Assistant:
+
+```
+https://radar.weather.gov/ridge/standard/KHGX_0.gif?t=<bucket de 5 min>
+```
+
+- **Sin API ni key**, y el bucket en la URL evita que el navegador se quede con la
+  imagen vieja: cada 5 minutos se pide un frame nuevo y la esquina superior derecha
+  dice de qué hora es.
+- El GIF trae el mapa base y los ecos encima. **Si no hay lluvia, se ve el mapa
+  limpio** — eso no es un fallo: es que no hay nada que pintar. Con tormenta
+  aparecen las manchas verdes/amarillas/rojas.
+- La imagen original es 600×550; la tarjeta la recorta al centro (`object-fit:
+  cover`), que es donde está el área metropolitana. Si el NWS no contesta, la
+  tarjeta se atenúa y conserva el último frame bueno.
+- Cambiar de sitio es cambiar `KHGX` por el código de otro radar (p. ej. `KEWX`
+  San Antonio, `KFWD` Dallas).
 
 ## Tráfico en vivo de la ruta (opcional)
 
