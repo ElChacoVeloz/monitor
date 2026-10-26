@@ -92,8 +92,10 @@ https://radar.weather.gov/ridge/standard/KHGX_0.gif?t=<bucket de 5 min>
 ```
 
 - **Sin API ni key**, y el bucket en la URL evita que el navegador se quede con la
-  imagen vieja: cada 5 minutos se pide un frame nuevo y la esquina superior derecha
-  dice de qué hora es.
+  imagen vieja: cada 5 minutos se pide un frame nuevo. La hora de la esquina
+  superior derecha **no es el reloj local**: el servidor pregunta por la cabecera
+  `Last-Modified` del GIF (un `HEAD` al NWS) y esa es la hora que se pinta, así que
+  si el radar dejara de publicar, la hora se queda congelada y se nota.
 - El GIF trae el mapa base y los ecos encima. **Si no hay lluvia, se ve el mapa
   limpio** — eso no es un fallo: es que no hay nada que pintar. Con tormenta
   aparecen las manchas verdes/amarillas/rojas.

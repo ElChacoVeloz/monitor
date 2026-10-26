@@ -20,6 +20,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import email.utils
 import hashlib
 import json
 import os
@@ -30,7 +31,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -550,6 +551,42 @@ def fresh_live_route(cfg: dict) -> dict | None:
             "measuredAt": data.get("measuredAt")}
 
 
+# --------------------------------------------------------------------- radar
+
+
+def radar_frame(cfg: dict, mock: bool) -> dict:
+    """Cuándo se publicó el frame del radar que enseña la tarjeta.
+
+    Se pregunta por la cabecera `Last-Modified` del GIF del NWS (un HEAD, 32 KB que
+    no se bajan). Es la única prueba de que la imagen es de ahora y no una copia
+    vieja del navegador: el texto que se pinta en la tarjeta sale de aquí, no del
+    reloj local.
+    """
+    r = cfg.get("radar") or {}
+    site = str(r.get("site") or "KHGX")
+    url = f"https://radar.weather.gov/ridge/standard/{site}_0.gif"
+    tz = ZoneInfo(cfg["location"]["timezone"])
+    if mock:
+        when = datetime.now(tz) - timedelta(minutes=3)
+        return {"site": site, "updatedAt": when.isoformat(timespec="seconds"),
+                "ageMinutes": 3, "source": "NWS (mock)"}
+
+    ua = (cfg.get("radar") or {}).get("userAgent",
+                                      "monitor-dashboard/1.0 (wall display)")
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": ua})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        stamp = resp.headers.get("Last-Modified")
+    if not stamp:
+        raise RuntimeError("el NWS no mandó Last-Modified")
+    when = email.utils.parsedate_to_datetime(stamp)
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    when = when.astimezone(tz)
+    age = (datetime.now(tz) - when).total_seconds() / 60
+    return {"site": site, "updatedAt": when.isoformat(timespec="seconds"),
+            "ageMinutes": round(age), "source": "NWS"}
+
+
 # --------------------------------------------------------------------- Nest
 
 
@@ -615,6 +652,7 @@ def build_payload(cfg: dict, mock: bool) -> dict:
         "nest": (120, lambda: nest_state(cfg, mock)),
         "alerts": (600, lambda: weather_alerts(cfg, mock)),
         "route": (300, lambda: route_info(cfg, mock)),
+        "radar": (300, lambda: radar_frame(cfg, mock)),
     }
     out: dict = {"generatedAt": now.isoformat(), "version": web_version(),
                  "timezone": cfg["location"]["timezone"],
@@ -630,7 +668,7 @@ def build_payload(cfg: dict, mock: bool) -> dict:
                                     "rotateSeconds", 300),
                             }},
                  "sources": {}}
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=8) as pool:
         futures = {name: pool.submit(CACHE.run, name, ttl, fn)
                    for name, (ttl, fn) in jobs.items()}
         for name, fut in futures.items():

@@ -473,10 +473,14 @@ function renderRadar() {
   img.style.setProperty("--radar-x", `${rc.focusX ?? 46}%`);
   img.style.setProperty("--radar-y", `${rc.focusY ?? 42}%`);
 
-  const cuando = new Date(bucket * RADAR_BUCKET_MS);
+  /* la hora que se enseña es la del frame publicado por el NWS (si llega);
+     así se ve de un vistazo si el radar dejó de actualizarse */
   const etiqueta = $("radarWhen");
   if (etiqueta) {
+    const frame = DATA.radar && DATA.radar.updatedAt ? new Date(DATA.radar.updatedAt) : null;
+    const cuando = frame && !isNaN(frame) ? frame : new Date(bucket * RADAR_BUCKET_MS);
     etiqueta.textContent = fmt({ hour: "numeric", minute: "2-digit", hour12: true }).format(cuando);
+    etiqueta.title = frame ? "frame publicado por el NWS" : "hora del último refresco";
   }
 }
 

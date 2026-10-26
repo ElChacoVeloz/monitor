@@ -68,9 +68,16 @@ class SourcesTest(unittest.TestCase):
         self.assertTrue(slot["routeWeekdaysOnly"])
         self.assertEqual(slot["rotateSeconds"], 300)
 
-    def test_all_six_sources_are_reported(self):
+    def test_all_sources_are_reported(self):
         self.assertEqual(set(self.payload["sources"]),
-                         {"weather", "calendar", "todoist", "nest", "alerts", "route"})
+                         {"weather", "calendar", "todoist", "nest", "alerts",
+                          "route", "radar"})
+
+    def test_radar_frame_time(self):
+        radar = self.payload["radar"]
+        self.assertEqual(radar["site"], "KHGX")
+        self.assertIn("updatedAt", radar)
+        self.assertLessEqual(radar["ageMinutes"], 30)
 
 
 if __name__ == "__main__":
