@@ -452,6 +452,34 @@ function sunCard() {
 const RADAR_URL = "https://radar.weather.gov/ridge/standard/KHGX_0.gif";
 const RADAR_BUCKET_MS = 5 * 60 * 1000;
 
+/* La casa (29.772378, -95.61402; ZIP 77079) en el GIF de 600x550, en %.
+   KHGX_0.gif es lat/lon lineal: 137 px por grado de longitud y 128.4 por grado de
+   latitud, calibrado con los marcadores de Houston (258,242) y Bryan (120,125) y
+   comprobado con el final de la I-45 en Galveston (334,304). La casa cae en
+   (223.6, 240.8) px = (37.27 %, 43.78 %). El foco viejo (43.5 %, 45 %) era downtown. */
+const RADAR_HOME = { x: 37.27, y: 43.78 };
+const RADAR_VIEW = { zoom: 1.8, fx: RADAR_HOME.x, fy: RADAR_HOME.y };
+
+/* Coloca el GIF en píxeles para que el foco quede AL CENTRO del marco (antes se
+   escalaba alrededor del foco, que lo deja fijo en su lugar pero no centrado), sin
+   dejar bordes vacíos, y pone el punto rojo encima de la casa. */
+function placeRadar() {
+  const img = $("radarImg");
+  const box = img && img.parentElement;
+  if (!box) return;
+  const w = box.clientWidth, h = box.clientHeight;
+  if (!w || !h) return;
+  const s = Math.max(w / 600, h / 550) * RADAR_VIEW.zoom;
+  const W = 600 * s, H = 550 * s;
+  const px = (RADAR_VIEW.fx / 100) * 600, py = (RADAR_VIEW.fy / 100) * 550;
+  const left = Math.min(0, Math.max(w - W, w / 2 - px * s));
+  const top = Math.min(0, Math.max(h - H, h / 2 - py * s));
+  Object.assign(img.style, { width: `${W}px`, height: `${H}px`, left: `${left}px`, top: `${top}px` });
+  const dot = $("radarHome");
+  if (dot) { dot.style.left = `${left + px * s}px`; dot.style.top = `${top + py * s}px`; }
+}
+window.addEventListener("resize", placeRadar);
+
 function renderRadar() {
   const img = $("radarImg");
   if (!img) return;
@@ -462,16 +490,16 @@ function renderRadar() {
   }
   if (!img.dataset.wired) {
     img.dataset.wired = "1";
-    img.addEventListener("load", () => img.classList.remove("failed"));
+    img.addEventListener("load", () => { img.classList.remove("failed"); placeRadar(); });
     img.addEventListener("error", () => img.classList.add("failed"));
   }
   const rc = (DATA.config && DATA.config.radar) || {};
   /* ?zoom=2.4 fuerza el acercamiento para probar sin tocar la config */
   const probado = parseFloat(new URLSearchParams(location.search).get("zoom") || "");
-  const zoom = Number.isFinite(probado) && probado > 0 ? probado : (rc.zoom || 1.8);
-  img.style.setProperty("--radar-zoom", String(zoom));
-  img.style.setProperty("--radar-x", `${rc.focusX ?? 46}%`);
-  img.style.setProperty("--radar-y", `${rc.focusY ?? 42}%`);
+  RADAR_VIEW.zoom = Number.isFinite(probado) && probado > 0 ? probado : (rc.zoom || 1.8);
+  RADAR_VIEW.fx = rc.focusX ?? RADAR_HOME.x;
+  RADAR_VIEW.fy = rc.focusY ?? RADAR_HOME.y;
+  placeRadar();
 
   /* la hora que se enseña es la del frame publicado por el NWS (si llega);
      así se ve de un vistazo si el radar dejó de actualizarse */

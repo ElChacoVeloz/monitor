@@ -99,15 +99,21 @@ https://radar.weather.gov/ridge/standard/KHGX_0.gif?t=<bucket de 5 min>
 - El GIF trae el mapa base y los ecos encima. **Si no hay lluvia, se ve el mapa
   limpio** — eso no es un fallo: es que no hay nada que pintar. Con tormenta
   aparecen las manchas verdes/amarillas/rojas.
-- La imagen original es 600×550; la tarjeta la recorta al centro (`object-fit:
-  cover`), que es donde está el área metropolitana. Si el NWS no contesta, la
-  tarjeta se atenúa y conserva el último frame bueno.
+- La imagen original es 600×550. `placeRadar()` (en `app.js`) la coloca en píxeles
+  para que **la casa quede al centro** del marco, sin dejar bordes vacíos, y le pone
+  encima un punto rojo que late. Si el NWS no contesta, la tarjeta se atenúa y
+  conserva el último frame bueno.
 - Cambiar de sitio es cambiar `KHGX` por el código de otro radar (p. ej. `KEWX`
-  San Antonio, `KFWD` Dallas).
-- **Acercamiento**: `radar.zoom` (1.0–2.5) y `radar.focusX/focusY` en % de la
-  imagen dicen cuánto y alrededor de qué punto se escala; por omisión 1.8 y el
-  punto de la casa, así que la casa queda fija en el encuadre. Para probar sin
-  desplegar: `?zoom=2.6`. **Más de ~2.5 no vale la pena**: el GIF del NWS mide
+  San Antonio, `KFWD` Dallas). **Hay que recalibrar el foco**, porque es un
+  porcentaje de *ese* GIF.
+- **Acercamiento**: `radar.zoom` (1.0–2.5) dice cuánto se acerca, y
+  `radar.focusX/focusY`, en % de la imagen, qué punto queda al centro. Por omisión
+  son 1.8 y la casa (37.27 %, 43.78 % = px 223.6, 240.8). El GIF es lat/lon lineal
+  (137 px por grado de longitud, 128.4 por grado de latitud), calibrado con los
+  marcadores de Houston (258,242) y Bryan (120,125) y comprobado con el final de la
+  I-45 en Galveston (334,304). El foco anterior (43.5 %, 45 %) caía en **downtown**,
+  ~24 km al este de la casa. Para probar sin desplegar: `?zoom=2.6`.
+  **Más de ~2.5 no vale la pena**: el GIF del NWS mide
   600×550 y arriba de eso se pixelean las calles. Para un zoom de barrio de
   verdad haría falta un origen de tiles (RainViewer + un mapa base), que cambia
   el look porque esas capas vienen sin calles.
