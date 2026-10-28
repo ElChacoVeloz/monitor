@@ -1,69 +1,131 @@
 <!doctype html>
-<html lang="en" class="day booting">
+<html lang="en" class="night booting">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920, height=1080">
-<title>Monitor</title>
+<title>Monitor · LCARS</title>
 <script>
-/* paleta antes del primer pintado: sin destello blanco a media noche */
+/* paleta antes del primer pintado (LCARS es oscuro siempre; la clase solo atenúa de noche) */
 (function () {
   var q = new URLSearchParams(location.search).get("theme");
   var t = (q === "day" || q === "night") ? q : null;
   if (!t) { try { t = localStorage.getItem("monitor.theme"); } catch (e) {} }
-  if (t !== "night") t = "day";
+  if (t !== "day") t = "night";
   document.documentElement.className = t + " booting";
 })();
 </script>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=lcars1">
 </head>
 <body>
 <div class="stage"><div class="screen" id="screen">
 
+  <!-- ============================================== marco superior -->
   <header class="top">
-    <section class="card clockcard">
-      <div class="clock"><span id="clockTime">--:--</span><span id="clockAmPm" class="ampm"></span></div>
-      <div class="dateline" id="dateLong">&nbsp;</div>
-      <div class="placeline"><span class="dot"></span><span id="place"></span></div>
-    </section>
-
-    <section class="card nowcard" id="nowCard">
-      <div class="nowicon" id="nowIcon"></div>
-      <div class="nowtext">
-        <div class="nowtemp"><span id="nowTemp">--</span><span class="deg">°C</span></div>
-        <div class="nowdesc" id="nowDesc">Loading…</div>
-        <div class="nowfeels" id="nowFeels"></div>
+    <div class="elbow e-top">
+      <span class="ecode">MONITOR · 8770</span>
+      <span class="ecode2" id="stardate">DAY —</span>
+    </div>
+    <div class="top-body">
+      <div class="top-content">
+        <div class="clock-block">
+          <div class="clock"><span id="clockTime">--:--</span><span class="ampm" id="clockAmPm"></span></div>
+          <div class="date" id="dateLong">&nbsp;</div>
+        </div>
+        <div class="now" id="nowCard">
+          <div class="now-icon" id="nowIcon"></div>
+          <div class="now-temp"><span id="nowTemp">--</span><i>°C</i></div>
+          <div class="now-meta">
+            <div class="m strong" id="nowDesc">Loading…</div>
+            <div class="m" id="nowFeels"></div>
+            <div class="m dim" id="nowExtra"></div>
+          </div>
+        </div>
+        <div class="forecast" id="forecast"></div>
       </div>
-    </section>
-
-    <section class="card forecastcard">
-      <div class="blocktitle">5-Day Forecast <span class="unit">°C</span></div>
-      <div class="forecast" id="forecast"></div>
-    </section>
+      <div class="bar">
+        <i class="seg s-lav" style="width:160px"></i>
+        <i class="seg s-org" style="width:52px"></i>
+        <i class="seg s-gry fill"></i>
+        <i class="seg s-pch" style="width:120px"></i>
+        <i class="seg s-lav" style="width:40px"></i>
+        <i class="seg s-gry cap" style="width:54px"></i>
+      </div>
+    </div>
   </header>
 
-  <main class="card weekcard">
-    <div class="blocktitle weektitle">
-      <span>This Week</span>
-      <span class="weeknote" id="weekNote"></span>
+  <!-- ===================================================== cuerpo -->
+  <section class="body">
+    <div class="row-top">
+      <div class="elbow e-mid"></div>
+      <div class="bar">
+        <i class="seg s-gry" style="width:240px"></i>
+        <i class="seg s-sal" style="width:40px"></i>
+        <i class="seg s-lav fill"></i>
+        <i class="seg s-cyn" style="width:90px"></i>
+        <i class="seg s-lav cap" style="width:54px"></i>
+      </div>
     </div>
-    <div class="week" id="week"></div>
-  </main>
 
-  <footer class="bottom">
-    <section class="card suncard" id="sunCard"></section>
-    <section class="card radarcard">
-      <div class="blocktitle">Radar <span class="radarwhen" id="radarWhen"></span></div>
-      <div class="radarframe"><img id="radarImg" alt="Radar KHGX Houston"><i class="radarhome" id="radarHome" title="Home · 77079"></i></div>
-    </section>
-    <section class="card nestcard" id="nestCard"></section>
-    <section class="card shopcard">
-      <div class="blocktitle">Shopping List <span class="shopnote" id="shopNote"></span></div>
-      <div class="shop" id="shop"></div>
-    </section>
-  </footer>
+    <div class="row-mid">
+      <nav class="side" id="side"></nav>
+
+      <div class="main">
+        <!-- semana -->
+        <div class="weekcard">
+          <div class="pill-head big">
+            <span class="ph-cap s-cyn"></span><span class="ph-name s-cyn">THIS WEEK</span>
+            <span class="ph-fill"></span><span class="ph-range" id="weekNote"></span><span class="ph-end s-cyn"></span>
+          </div>
+          <div class="week" id="week"></div>
+        </div>
+
+        <!-- fila de abajo -->
+        <div class="lower">
+          <section class="panel slotpanel" id="sunCard"></section>
+
+          <section class="panel radarpanel">
+            <div class="pill-head">
+              <span class="ph-cap s-sal"></span><span class="ph-name s-sal">RADAR · KHGX</span>
+              <span class="ph-fill"></span><span class="ph-badge" id="radarWhen">—</span><span class="ph-end s-sal"></span>
+            </div>
+            <div class="pbody">
+              <div class="radarframe"><img id="radarImg" alt="Radar KHGX Houston"><i class="radarhome" id="radarHome" title="Home · 77079"></i></div>
+            </div>
+          </section>
+
+          <section class="panel nestpanel" id="nestCard"></section>
+
+          <section class="panel shoppanel">
+            <div class="pill-head">
+              <span class="ph-cap s-pch"></span><span class="ph-name s-pch">SHOPPING LIST</span>
+              <span class="ph-fill"></span><span class="ph-badge" id="shopNote"></span><span class="ph-end s-pch"></span>
+            </div>
+            <div class="pbody"><div class="shop" id="shop"></div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-bot">
+      <div class="elbow e-bot"><span class="ecode" id="botCode">REF —</span></div>
+      <div class="bot-body">
+        <div class="bot-content">
+          <div class="loc" id="place">HOME</div>
+          <div class="sources" id="sources"></div>
+        </div>
+        <div class="bar">
+          <i class="seg s-pch" style="width:140px"></i>
+          <i class="seg s-gry fill"></i>
+          <i class="seg s-org" style="width:48px"></i>
+          <i class="seg s-lav" style="width:190px"></i>
+          <i class="seg s-gry cap" style="width:54px"></i>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </div></div>
 <div class="toast" id="toast"></div>
-<script src="app.js"></script>
+<script src="app.js?v=lcars1"></script>
 </body>
 </html>
