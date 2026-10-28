@@ -300,6 +300,7 @@ function slotNow() {
   if (/^\d{1,2}:\d{2}$/.test(forced)) { const [h, m] = forced.split(":").map(Number); now.setHours(h, m, 0, 0); }
   return now;
 }
+const URGENT_SEV = { Extreme: true, Severe: true };
 function slotState() {
   const forced = new URLSearchParams(location.search).get("slot");
   if (forced) return { kind: forced === "alert" ? "alerts" : forced };
@@ -308,6 +309,11 @@ function slotState() {
   const t = hhmmInTZ(now);
   const wd = weekdayInTZ(now);
   const isWeekday = wd >= 1 && wd <= 5;
+  /* 0) una alerta Severe/Extreme va hasta adelante de todo: no rota con el sol
+     ni cede ante la ruta de la escuela (el server ordena items por severidad) */
+  const worst = DATA.alerts && DATA.alerts.items && DATA.alerts.items[0];
+  if (worst && URGENT_SEV[worst.severity]) return { kind: "alerts", urgent: true };
+  /* 1) la ruta manda en sus ventanas (L-V) */
   for (const w of (cfg.routeWindows || [])) {
     if (DATA.route && (!cfg.routeWeekdaysOnly || isWeekday) && t >= w.start && t < w.end) {
       return { kind: "route", window: w };
