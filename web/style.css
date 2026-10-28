@@ -13,8 +13,8 @@ html.day {
   --bg-1: #b3cdec;
   --bg-2: #e3eefb;
   --bg-3: #cde0f4;
-  --surface: rgba(255, 255, 255, 0.86);
-  --surface-2: rgba(255, 255, 255, 0.55);
+  --surface: rgba(243, 249, 255, 0.87);
+  --surface-2: rgba(233, 243, 253, 0.60);
   --text: #101828;
   --muted: #667085;
   --faint: #98a2b3;
