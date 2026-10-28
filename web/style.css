@@ -10,9 +10,9 @@
 }
 
 html.day {
-  --bg-1: #dfe7f2;
-  --bg-2: #f3f7fc;
-  --bg-3: #eef3fa;
+  --bg-1: #b3cdec;
+  --bg-2: #e3eefb;
+  --bg-3: #cde0f4;
   --surface: rgba(255, 255, 255, 0.86);
   --surface-2: rgba(255, 255, 255, 0.55);
   --text: #101828;
