@@ -215,6 +215,7 @@ html, body {
   border-left: 6px solid var(--ev, var(--accent));
   background: color-mix(in srgb, var(--ev, var(--accent)) 32%, transparent);
   overflow: hidden;
+  flex: 0 0 auto;   /* sin esto el flex lo encoge y el titulo se corta dentro de la tarjeta */
 }
 .evt .etime { font-size: 16px; font-weight: 600; letter-spacing: 0.01em; opacity: 0.92; }
 .evt .etitle { font-size: 19px; font-weight: 500; line-height: 1.22; margin-top: 2px; }
@@ -222,8 +223,10 @@ html, body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .evt.allday .etime { text-transform: uppercase; font-size: 14px; letter-spacing: 0.1em; color: var(--muted); }
 .evt.allday .etitle { font-weight: 600; }
+/* evento que viene de DOS calendarios: barra del primero + filo del segundo */
+.evt.dual { box-shadow: inset 2px 0 0 var(--ev2); }
 .empty { font-size: 17px; color: var(--faint); opacity: 0.6; padding: 4px; }
-.more { font-size: 15px; color: var(--muted); text-align: right; padding-top: 2px; }
+.more { font-size: 15px; color: var(--muted); text-align: right; padding-top: 2px; flex: 0 0 auto; }
 .daycol.sparse .evt { padding: 12px 13px 13px; }
 .daycol.sparse .evt .etitle { font-size: 21px; }
 .daycol.sparse .evt .etime { font-size: 17px; }

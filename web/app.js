@@ -197,6 +197,29 @@ function renderForecast() {
   }).join("");
 }
 
+/* El Capitán da de alta algunas citas en dos calendarios a propósito (y quiere
+   que se vean en los dos). En pantalla van como UNA sola tarjeta: mismo título,
+   misma hora y mismo día = el mismo evento; su color es la mezcla de los
+   calendarios que lo traen. */
+function mergeDuplicateEvents(evs) {
+  const out = [];
+  const seen = new Map();
+  for (const ev of evs) {
+    const key = [ev.allDay ? "1" : "0", ev.start || "", ev.end || "",
+                 (ev.title || "").trim().toLowerCase()].join("|");
+    const prev = seen.get(key);
+    if (!prev) {
+      const merged = { ...ev, colors: ev.color ? [ev.color] : [] };
+      seen.set(key, merged);
+      out.push(merged);
+    } else {
+      if (ev.color && !prev.colors.includes(ev.color)) prev.colors.push(ev.color);
+      if (!prev.location && ev.location) prev.location = ev.location;
+    }
+  }
+  return out;
+}
+
 function eventTime(ev) {
   if (ev.allDay) return "All day";
   const d = new Date(ev.start);
@@ -257,14 +280,21 @@ function renderWeek() {
     const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : fmt({ weekday: "long" }).format(dt);
     const num = fmt({ day: "numeric" }).format(dt);
     const mon = fmt({ month: "short" }).format(dt);
-    const evs = day.events || [];
+    const evs = mergeDuplicateEvents(day.events || []);
     const tint = isNight() ? 0.26 : 0.18;
     const cards = evs.map((ev) => {
-      const col = adaptColor(ev.color);
-      const bg = `rgba(${col.rgb[0]}, ${col.rgb[1]}, ${col.rgb[2]}, ${tint})`;
+      const cols = (ev.colors && ev.colors.length ? ev.colors : [ev.color]).map(adaptColor);
+      const rgba = (c, a) => `rgba(${c.rgb[0]}, ${c.rgb[1]}, ${c.rgb[2]}, ${a})`;
+      const bg = cols.length > 1
+        ? `linear-gradient(120deg, ${cols.map((c) => rgba(c, tint)).join(", ")})`
+        : rgba(cols[0], tint);
+      const n = cols.length;
+      const dual = n > 1;
+      const bar = cols[0].c;
+      const second = dual ? cols[1].c : bar;
       return `
-      <div class="evt ${ev.allDay ? "allday" : ""}" style="--ev:${col.c};
-           border-left-color:${col.c}; background:${bg}">
+      <div class="evt ${ev.allDay ? "allday" : ""} ${dual ? "dual" : ""}" style="--ev:${bar}; --ev2:${second};
+           border-left-color:${bar}; background:${bg}">
         <div class="etime">${eventTime(ev)}</div>
         <div class="etitle">${escapeHtml(ev.title)}</div>
         ${ev.location && !ev.allDay ? `<div class="eloc">${escapeHtml(ev.location)}</div>` : ""}
@@ -288,11 +318,20 @@ function renderWeek() {
     if (col.scrollHeight > col.clientHeight + 2) day.classList.add("denser");
     let hidden = 0;
     const cards = [...col.querySelectorAll(".evt")];
-    while (col.scrollHeight > col.clientHeight + 2 && cards.length - hidden > 1) {
-      cards[cards.length - 1 - hidden].style.display = "none";
-      hidden++;
+    const fits = () => col.scrollHeight <= col.clientHeight + 2;
+    if (!fits()) {
+      /* el "+N more" ocupa alto: se reserva ANTES de medir, si no su propia
+         altura empuja la ultima tarjeta fuera del recorte */
+      const more = document.createElement("div");
+      more.className = "more";
+      col.appendChild(more);
+      while (!fits() && cards.length - hidden > 1) {
+        cards[cards.length - 1 - hidden].style.display = "none";
+        hidden++;
+        more.textContent = `+${hidden} more`;
+      }
+      if (!hidden) more.remove();
     }
-    if (hidden) col.insertAdjacentHTML("beforeend", `<div class="more">+${hidden} more</div>`);
   });
 
   const bits = [];
