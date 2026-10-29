@@ -40,6 +40,7 @@ BASE = Path(__file__).resolve().parent
 WEB = BASE / "web"
 sys.path.insert(0, str(BASE))
 import ics_lib  # noqa: E402  libreria de ICS/repeticiones (solo stdlib)
+import radar_dark  # noqa: E402  radar del NWS en modo oscuro (solo stdlib)
 
 CONFIG_PATH = BASE / "config.json"
 
@@ -720,6 +721,22 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+            return
+        if self.path.split("?")[0] == "/api/radar.gif":
+            # radar del NWS con la paleta oscurecida (tema LCARS); el front se cae
+            # al GIF original si esto falla
+            try:
+                body, lm = radar_dark.dark_radar("KHGX")
+                self.send_response(200)
+                self.send_header("Content-Type", "image/gif")
+                self.send_header("Cache-Control", "no-store")
+                if lm:
+                    self.send_header("X-Radar-Last-Modified", lm)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as exc:  # noqa: BLE001
+                self.send_error(502, f"radar: {type(exc).__name__}")
             return
         if self.path in ("/", ""):
             self.path = "/index.html"

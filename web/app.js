@@ -406,6 +406,9 @@ function renderSlot(force) {
 
 /* ─────────────────── radar del NWS (KHGX), centrado en la casa ─────────────────── */
 const RADAR_URL = "https://radar.weather.gov/ridge/standard/KHGX_0.gif";
+/* versión oscura que sirve el propio tablero (paleta del GIF reescrita: mapa
+   oscuro, ecos de lluvia con sus colores reales). Si falla, se cae al original. */
+const RADAR_DARK = "/api/radar.gif";
 const RADAR_BUCKET_MS = 5 * 60 * 1000;
 const RADAR_HOME = { x: 37.27, y: 43.78 };     // calibrado con marcadores del GIF
 const RADAR_VIEW = { zoom: 1.8, fx: RADAR_HOME.x, fy: RADAR_HOME.y };
@@ -430,11 +433,19 @@ window.addEventListener("resize", placeRadar);
 function renderRadar() {
   const img = $("radarImg");
   const bucket = Math.floor(Date.now() / RADAR_BUCKET_MS);
-  if (img.dataset.b !== String(bucket)) { img.dataset.b = String(bucket); img.src = `${RADAR_URL}?t=${bucket}`; }
+  if (img.dataset.b !== String(bucket)) {
+    img.dataset.b = String(bucket);
+    img.dataset.fallback = "";
+    img.src = `${RADAR_DARK}?t=${bucket}`;
+  }
   if (!img.dataset.wired) {
     img.dataset.wired = "1";
     img.addEventListener("load", () => { img.classList.remove("failed"); placeRadar(); });
-    img.addEventListener("error", () => img.classList.add("failed"));
+    img.addEventListener("error", () => {
+      /* sin radar oscuro: el original del NWS, claro pero con dato */
+      if (!img.dataset.fallback) { img.dataset.fallback = "1"; img.src = `${RADAR_URL}?t=${img.dataset.b}`; return; }
+      img.classList.add("failed");
+    });
   }
   const rc = (DATA.config && DATA.config.radar) || {};
   const probado = parseFloat(new URLSearchParams(location.search).get("zoom") || "");
