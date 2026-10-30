@@ -134,6 +134,8 @@ html.booting *,html.booting *::before,html.booting *::after{transition:none !imp
   display:inline-flex;align-items:center;height:24px;padding:0 12px 0 10px;
   border-radius:12px 0 0 12px;color:#000;font-size:17px;font-weight:600;letter-spacing:.04em;white-space:nowrap;
 }
+.evt.live .etime,.sunrow .sk.live,.fday .flabel.live{animation:liveblink 2s steps(2,start) infinite}
+@keyframes liveblink{to{opacity:.45}}
 .evt.dual .etime{box-shadow:inset -10px 0 0 var(--ev2)}
 .evt .etitle{
   margin-top:4px;font-size:21px;line-height:1.18;color:var(--ink);letter-spacing:.03em;
@@ -220,7 +222,7 @@ html.booting *,html.booting *::before,html.booting *::after{transition:none !imp
 .shop{flex:1;min-height:0;overflow:hidden}
 .shopgrid{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px 26px;align-content:start}
 .shoppinned{display:grid;gap:8px 26px;padding-bottom:10px;margin-bottom:10px;border-bottom:3px solid var(--gry)}
-.shopitem{display:flex;align-items:center;font-size:25px;letter-spacing:.04em;min-width:0;height:32px}
+.shopitem{display:flex;align-items:center;font-size:20px;letter-spacing:.04em;min-width:0;height:32px}
 .shopitem .box{flex:none;width:18px;height:18px;border:3px solid var(--lav);margin-right:12px}
 .shopitem .dot{flex:none;width:30px;height:20px;background:var(--pch);border-radius:10px 0 0 10px;margin-right:12px}
 .shopitem .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

@@ -743,7 +743,7 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def end_headers(self):
-        if self.path.endswith((".html", ".js", ".css")):
+        if self.path.split("?", 1)[0].endswith((".html", ".js", ".css")):
             self.send_header("Cache-Control", "no-store")
         super().end_headers()
 

@@ -197,6 +197,48 @@ function mergeDuplicateEvents(evs) {
   return out;
 }
 
+/* Mismo pulso del iPad; el intervalo de vigencia es [inicio, fin). */
+function eventLive(ev, day, now = new Date()) {
+  if (ev.allDay) {
+    const parts = fmt({ year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+    const part = (name) => parts.find((p) => p.type === name).value;
+    return day === `${part("year")}-${part("month")}-${part("day")}`;
+  }
+  const start = new Date(ev.start || "").getTime();
+  const end = new Date(ev.end || "").getTime();
+  return Number.isFinite(start) && Number.isFinite(end) && start <= now && now < end;
+}
+
+function updateCalendarLive() {
+  const now = new Date();
+  document.querySelectorAll('.evt[data-event-day]').forEach((node) => {
+    const ev = { allDay: node.classList.contains('allday'), start: node.dataset.start, end: node.dataset.end };
+    node.classList.toggle('live', eventLive(ev, node.dataset.eventDay, now));
+  });
+  updateSunLive(now);
+}
+
+/* Sol real: de día [amanecer, atardecer); null si no hay datos (nada parpadea). */
+function sunIsUp(sun, now = new Date()) {
+  if (!sun || !sun.sunrise || !sun.sunset) return null;
+  const rise = new Date(sun.sunrise).getTime(), set = new Date(sun.sunset).getTime();
+  if (!Number.isFinite(rise) || !Number.isFinite(set)) return null;
+  return rise <= now && now < set;
+}
+
+/* Píldoras decorativas que laten: SUNRISE y TODAY de día, SUNSET de noche. */
+function updateSunLive(now = new Date()) {
+  const up = sunIsUp(DATA && DATA.weather && DATA.weather.sun, slotNowFor(now));
+  const set = (sel, on) => document.querySelectorAll(sel).forEach((n) => n.classList.toggle("live", on));
+  set(".sunrow.rise .sk", up === true);
+  set(".sunrow.set .sk", up === false);
+  set(".fday.today .flabel", up === true);
+}
+/* ?now= también mueve el latido (pruebas de noche sin esperar) */
+function slotNowFor(now) {
+  return new URLSearchParams(location.search).get("now") ? slotNow() : now;
+}
+
 function eventTime(ev) {
   if (ev.allDay) return "All day";
   const d = new Date(ev.start);
@@ -236,7 +278,7 @@ function renderWeek() {
     const cards = evs.map((ev) => {
       const cols = (ev.colors.length ? ev.colors : [ev.color]).map(pillColor);
       const dual = cols.length > 1;
-      return `<div class="evt ${ev.allDay ? "allday" : ""} ${dual ? "dual" : ""}" style="--ev2:${cols[1] || cols[0]}">
+      return `<div class="evt ${ev.allDay ? "allday" : ""} ${dual ? "dual" : ""}" data-event-day="${escapeHtml(day.date)}" data-start="${escapeHtml(ev.start || "")}" data-end="${escapeHtml(ev.end || "")}" style="--ev2:${cols[1] || cols[0]}">
         <div class="etime" style="background:${cols[0]}">${eventTime(ev)}</div>
         <div class="etitle">${escapeHtml(ev.title)}</div>
         ${ev.location && !ev.allDay ? `<div class="eloc">${escapeHtml(ev.location)}</div>` : ""}
@@ -252,6 +294,7 @@ function renderWeek() {
     </div>`;
   }).join("");
 
+  updateCalendarLive();
   /* nada de recorte silencioso: se mide y lo que no cabe se anuncia */
   box.querySelectorAll(".events").forEach((col) => {
     const day = box.querySelector(`.daycol[data-day="${col.dataset.day}"]`);
@@ -343,7 +386,7 @@ function sunCard() {
   else if (now < set) foot = `Sunset in ${hmTxt(mins(now, set))}`;
   else foot = "Sun is down";
   return head("s-lav", "SUN · HOUSTON") + `<div class="pbody">
-    <div class="sunrow"><div class="sk s-pch">SUNRISE</div><div class="sv">${rt}<i>${ra}</i></div></div>
+    <div class="sunrow rise"><div class="sk s-pch">SUNRISE</div><div class="sv">${rt}<i>${ra}</i></div></div>
     <div class="sunrow set"><div class="sk s-lav">SUNSET</div><div class="sv">${st}<i>${sa}</i></div></div>
     <div class="daylen">${foot}</div></div>`;
 }
@@ -567,6 +610,7 @@ function render() {
   renderNest();
   renderShop();
   renderFooter();
+  updateSunLive();
 }
 
 /* ─────────────────────────────── datos ─────────────────────────────── */
@@ -598,7 +642,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 6000);
 }
 
-setInterval(() => { renderClock(); if (DATA) renderSlot(); }, 1000);
+setInterval(() => { renderClock(); if (DATA) { renderSlot(); updateCalendarLive(); } }, 1000);
 setInterval(applyTheme, 30000);
 setInterval(load, 60000);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (DATA) render(); });

@@ -328,6 +328,8 @@ GNOME y el diálogo se planta encima del tablero al arrancar.
 | `calendars.json` | las direcciones secretas (600, no se versiona) |
 | `web/` | el tablero (`index.html`, `style.css`, `app.js`) |
 | `tests/test_calendar_ics.py` | pruebas con un feed fixture (sin red) |
+| `tests/test_calendar_live.cjs` | píldoras que laten: evento en curso, ALL DAY, sol (`node --test`) |
+| `tests/test_asset_cache.py` | `no-store` también para `style.css?v=…` / `app.js?v=…` |
 | `test_theme.py`, `test_data.py` | bancos de prueba con datos movidos a propósito |
 | `deploy/` | unidad systemd y arranque de kiosco |
 
@@ -344,6 +346,31 @@ GNOME y el diálogo se planta encima del tablero al arrancar.
   `night`; con el anochecer en el futuro, `day` (sin usar `?theme=`).
 - Lista con 22 items (`test_data.py bigshop`): se muestran los que caben y el
   encabezado dice cuántos van, sin recortar en silencio.
+
+## Píldoras que laten
+
+Mismo latido que el tablero del iPad (`liveblink`, 2 s, a 45 % de opacidad),
+recalculado cada segundo sin repintar:
+
+| Píldora | Late cuando |
+|---|---|
+| Hora del evento | el evento está en curso, `[inicio, fin)` |
+| `ALL DAY` | todo el día de hoy (medianoche a medianoche en la zona del tablero) |
+| `SUNRISE` | de día, entre amanecer y atardecer |
+| `SUNSET` | de noche |
+| `TODAY` del pronóstico | de día |
+
+Para probar la noche sin esperarla: `?slot=sun&now=2026-10-30T21:00`.
+
+```bash
+node --test tests/test_calendar_live.cjs
+python3 -m unittest tests.test_asset_cache
+```
+
+**Caché:** `index.html` pide `style.css?v=…` y `app.js?v=…`. El servidor decide el
+`no-store` por la ruta **sin** query; antes miraba la ruta completa, el kiosco se
+quedaba con el CSS/JS viejo aunque la Pi ya tuviera el nuevo. Al cambiar algo del
+front conviene subir también ese `v=`.
 
 ## Licencia
 
